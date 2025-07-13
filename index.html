@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITR Form Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">ITR Form Analyzer</h1>
+            <div class="max-w-3xl mx-auto">
+                <p class="text-gray-600 mb-6">Upload your AIS and Form 24AS to get ITR form suggestions with detailed explanations</p>
+                
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+                    <h2 class="text-xl font-semibold mb-4">How This App Works</h2>
+                    <div class="text-left">
+                        <p class="mb-4">This application helps you determine which ITR form is most appropriate for your tax filing based on your income sources and financial status. Here's what you need to know:</p>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="font-semibold mb-2">What You Need:</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-sm">
+                                    <li>Your AIS (Annual Information Statement) PDF</li>
+                                    <li>Your Form 24AS PDF</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-2">Privacy & Security:</h3>
+                                <ul class="list-disc pl-5 space-y-2 text-sm">
+                                    <li>All processing happens in your browser</li>
+                                    <li>No data is sent to any server</li>
+                                    <li>Your documents remain private</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <h3 class="font-semibold mb-2">The App Will Check For:</h3>
+                            <ul class="list-disc pl-5 grid md:grid-cols-2 gap-2 text-sm">
+                                <li>Salary Income</li>
+                                <li>Business Income</li>
+                                <li>Capital Gains</li>
+                                <li>Rental Income</li>
+                                <li>Director Status</li>
+                                <li>Foreign Income</li>
+                                <li>Presumptive Income</li>
+                                <li>Other Income Sources</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+            <div class="space-y-6">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div class="text-center">
+                        <label for="aisFile" class="block text-sm font-medium text-gray-700 mb-2">
+                            Upload AIS PDF
+                        </label>
+                        <input type="file" id="aisFile" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    </div>
+                </div>
+
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    <div class="text-center">
+                        <label for="form24asFile" class="block text-sm font-medium text-gray-700 mb-2">
+                            Upload Form 24AS PDF
+                        </label>
+                        <input type="file" id="form24asFile" accept=".pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    </div>
+                </div>
+
+                <button id="analyzeBtn" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200">
+                    Analyze Documents
+                </button>
+            </div>
+
+            <div id="result" class="mt-8 hidden">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Analysis Result</h2>
+                <div id="resultContent" class="bg-gray-50 rounded-lg p-4">
+                    <!-- Results will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ITR Forms Information -->
+        <div class="max-w-4xl mx-auto mt-12 p-6 bg-white rounded-lg shadow-lg">
+            <h2 class="text-2xl font-bold mb-6">Understanding ITR Forms</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-blue-700">ITR-1 (Sahaj)</h3>
+                        <p class="text-sm text-gray-600 mb-2">For individuals with:</p>
+                        <ul class="list-disc pl-5 text-sm text-gray-600">
+                            <li>Salary income</li>
+                            <li>One house property</li>
+                            <li>Other sources (interest)</li>
+                            <li>Agricultural income up to ₹5,000</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-blue-700">ITR-2</h3>
+                        <p class="text-sm text-gray-600 mb-2">For individuals and HUFs with:</p>
+                        <ul class="list-disc pl-5 text-sm text-gray-600">
+                            <li>Capital gains</li>
+                            <li>Foreign income/assets</li>
+                            <li>Multiple properties</li>
+                            <li>Director in a company</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-blue-700">ITR-3</h3>
+                        <p class="text-sm text-gray-600 mb-2">For individuals and HUFs with:</p>
+                        <ul class="list-disc pl-5 text-sm text-gray-600">
+                            <li>Business income</li>
+                            <li>Professional income</li>
+                            <li>All income applicable to ITR-2</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-blue-700">ITR-4 (Sugam)</h3>
+                        <p class="text-sm text-gray-600 mb-2">For individuals with:</p>
+                        <ul class="list-disc pl-5 text-sm text-gray-600">
+                            <li>Presumptive business income</li>
+                            <li>Professional income under 44ADA</li>
+                            <li>Salary and other sources of income</li>
+                            <li>Total turnover up to ₹2 crore</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html> 
