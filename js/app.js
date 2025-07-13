@@ -450,3 +450,8 @@ function isReadyForAnalysis() {
            uploadedFiles.aisFile !== null &&
            uploadedFiles.form24asFile !== null;
 } 
+
+// Event listeners
+document.getElementById('aisFile').addEventListener('change', handleFileUpload);
+document.getElementById('form24asFile').addEventListener('change', handleFileUpload);
+document.getElementById('analyzeBtn').addEventListener('click', analyzeDocuments);
