@@ -285,8 +285,7 @@ function analyzeDocuments() {
         presumptiveTurnover: checkPresumptiveTurnover(combinedText)
     };
 
-    const suggestedForm = determineITRForm(analysis);
-    displayResult(suggestedForm, analysis);
+    showQuestionnaire(analysis);
 }
 
 function checkForSalaryIncome(text) {
@@ -373,12 +372,16 @@ function determineITRForm(analysis) {
     return 'ITR2';
 }
 
-function displayResult(suggestedForm, analysis) {
+function displayResult(suggestedForm, analysis, fromQuestionnaire = false) {
     const resultDiv = document.getElementById('result');
     const resultContent = document.getElementById('resultContent');
     
     let html = `<p class="text-xl font-bold mb-4">Suggested Form: ${itrRules[suggestedForm].name}</p>`;
     
+    if (fromQuestionnaire) {
+        html += '<p class="text-sm text-green-700 bg-green-100 p-2 rounded-md mb-4">This suggestion is based on your confirmed answers from the questionnaire.</p>';
+    }
+
     // Display detected income sources
     html += '<div class="mb-6">';
     html += '<p class="font-semibold mb-2">Detected Income Sources & Conditions:</p>';
@@ -455,3 +458,78 @@ function isReadyForAnalysis() {
 document.getElementById('aisFile').addEventListener('change', handleFileUpload);
 document.getElementById('form24asFile').addEventListener('change', handleFileUpload);
 document.getElementById('analyzeBtn').addEventListener('click', analyzeDocuments);
+document.getElementById('getFinalSuggestionBtn').addEventListener('click', getFinalSuggestion);
+
+const questions = [
+    { id: 'hasSalaryIncome', text: 'Do you have income from Salary/Pension?' },
+    { id: 'hasRentalIncome', text: 'Do you have income from House Property?' },
+    { id: 'multipleProperties', text: 'If yes to House Property, do you have income from more than one house property?', dependsOn: 'hasRentalIncome' },
+    { id: 'hasCapitalGains', text: 'Do you have income from Capital Gains (e.g., from selling shares, mutual funds, property)?' },
+    { id: 'hasBusinessIncome', text: 'Do you have income from Business or Profession?' },
+    { id: 'hasPresumptiveIncome', text: 'If yes to Business/Profession, do you want to opt for the presumptive taxation scheme (Section 44AD, 44ADA, or 44AE)?', dependsOn: 'hasBusinessIncome' },
+    { id: 'isDirector', text: 'Are you a Director in a company?' },
+    { id: 'hasForeignIncome', text: 'Do you have any foreign income or foreign assets?' },
+    { id: 'hasAgricultureIncome', text: 'Is your agricultural income more than ₹5,000?' }
+];
+
+function showQuestionnaire(analysis) {
+    const questionnaireDiv = document.getElementById('questionnaire');
+    const form = document.getElementById('questionnaire-form');
+    form.innerHTML = '';
+
+    questions.forEach(q => {
+        const checkedValue = analysis[q.id] ? 'yes' : 'no';
+        const questionHtml = `
+            <div class="question-item ${q.dependsOn ? 'hidden ml-8' : ''}" data-dependency="${q.dependsOn || ''}">
+                <label class="block text-sm font-medium text-gray-700">${q.text}</label>
+                <div class="mt-2 space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="${q.id}" value="yes" class="form-radio" ${checkedValue === 'yes' ? 'checked' : ''}>
+                        <span class="ml-2">Yes</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" name="${q.id}" value="no" class="form-radio" ${checkedValue === 'no' ? 'checked' : ''}>
+                        <span class="ml-2">No</span>
+                    </label>
+                </div>
+            </div>
+        `;
+        form.insertAdjacentHTML('beforeend', questionHtml);
+    });
+
+    // Add event listeners for dependent questions
+    form.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', (event) => {
+            const name = event.target.name;
+            const value = event.target.value;
+            const dependentQuestions = form.querySelectorAll(`[data-dependency="${name}"]`);
+            dependentQuestions.forEach(dq => {
+                if (value === 'yes') {
+                    dq.classList.remove('hidden');
+                } else {
+                    dq.classList.add('hidden');
+                }
+            });
+        });
+        // Trigger change to set initial state of dependent questions
+        if(radio.checked) {
+            radio.dispatchEvent(new Event('change'));
+        }
+    });
+
+    questionnaireDiv.classList.remove('hidden');
+    document.getElementById('result').classList.add('hidden'); // Hide initial result
+}
+
+function getFinalSuggestion() {
+    const form = document.getElementById('questionnaire-form');
+    const formData = new FormData(form);
+    const finalAnalysis = {};
+
+    for (const [key, value] of formData.entries()) {
+        finalAnalysis[key] = (value === 'yes');
+    }
+
+    const suggestedForm = determineITRForm(finalAnalysis);
+    displayResult(suggestedForm, finalAnalysis, true);
+}
